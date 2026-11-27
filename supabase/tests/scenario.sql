@@ -139,3 +139,27 @@ from calibrate_weights(1500, 2.0, 0.001);
 \timing off
 select 'active weights rows: ' || count(*) from match_weights where active;
 select 'admin stats: ' || admin_stats()::text;
+
+-- hardening checks
+set role anon;
+select null from set_config('request.jwt.claim.sub', '', false);
+do $$ begin
+  perform join_event(gen_random_uuid());
+  raise exception 'FAIL: anon could call join_event';
+exception when insufficient_privilege then raise notice 'ok: anon blocked from join_event';
+end $$;
+select 'anon can view event page: ' || (get_event_details((select id from events where sport_id = 1)) is not null);
+set role authenticated;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+do $$ begin
+  perform history_affinity(auth.uid(), gen_random_uuid());
+  raise exception 'FAIL: helper exposed';
+exception when insufficient_privilege then raise notice 'ok: internal helper not callable';
+end $$;
+select 'trigger still fires after revoke: ' || count(*) from (
+  select 1 from events e where e.organizer_id = '00000000-0000-0000-0000-000000000001') x;
+insert into events (organizer_id, sport_id, title, city, lat, lng, starts_at, max_participants)
+values ('00000000-0000-0000-0000-000000000002', 1, 'בדיקת טריגר', 'תל אביב', 32.08, 34.78, now() + interval '1 day', 6);
+select 'organizer auto-joined after revoke: ' || count(*) from event_participants ep join events e on e.id = ep.event_id where e.title = 'בדיקת טריגר';
+select 'recs after hardening: ' || count(*) from recommend_events();
+reset role;
