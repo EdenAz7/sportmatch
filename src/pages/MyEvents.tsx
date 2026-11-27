@@ -42,6 +42,7 @@ export default function MyEvents() {
   return (
     <div className="space-y-4">
       <h1 className="page-title">האירועים שלי</h1>
+      <div className="lg:max-w-md">
       <Segmented
         value={tab}
         onChange={setTab}
@@ -50,6 +51,7 @@ export default function MyEvents() {
           ['past', 'עברו'],
         ] as const}
       />
+      </div>
       {loading ? (
         <PageLoader />
       ) : list.length === 0 ? (
@@ -66,13 +68,13 @@ export default function MyEvents() {
           )}
         </Empty>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((r) => (
             <EventCard
               key={r.events.id}
               event={r.events}
               sport={sports.find((s) => s.id === r.events.sport_id)}
-              joinedCount={r.events.event_participants.filter((p) => p.status !== 'left').length}
+              joinedCount={r.events.event_participants.filter((p) => p.status !== 'left').length + (r.events.guest_count ?? 0)}
               imIn
               badge={r.events.organizer_id === session?.user.id ? 'מארגן' : undefined}
             />

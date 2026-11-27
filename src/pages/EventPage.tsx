@@ -44,7 +44,9 @@ export default function EventPage() {
   const joined = d.participants.filter((p) => p.status === 'joined' || p.status === 'attended' || p.status === 'no_show')
   const past = new Date(e.starts_at).getTime() < Date.now()
   const iAmIn = d.my_status === 'joined' || d.my_status === 'attended'
-  const spots = e.max_participants - joined.length
+  const guests = e.guest_count ?? 0
+  const taken = joined.length + guests
+  const spots = e.max_participants - taken
   const shareUrl = `${window.location.origin}${window.location.pathname}#/events/${e.id}`
   const shareText = `${d.sport.emoji} ${e.title}\n${formatDate(e.starts_at)} · ${e.city}\nנשארו ${Math.max(0, spots)} מקומות – הצטרפו ב-SportMatch:\n${shareUrl}`
   const hasTeams = joined.some((p) => p.team != null)
@@ -69,12 +71,16 @@ export default function EventPage() {
 
   function computeTeams() {
     const players = joined.map((p) => ({ id: p.user_id, name: p.full_name, level: Number(p.level) }))
+    // the organizer's own players are not registered: assume the event's target level
+    for (let i = 1; i <= guests; i++) players.push({ id: `guest-${i}`, name: `חבר של המארגן ${i}`, level: e.level })
     setPreview(balanceTeams(players, Math.max(2, d!.sport.team_count)))
   }
 
   async function saveTeams() {
     if (!preview) return
-    const payload = preview.teams.flatMap((t, i) => t.map((p) => ({ user_id: p.id, team: i + 1 })))
+    const payload = preview.teams.flatMap((t, i) =>
+      t.filter((p) => !p.id.startsWith('guest-')).map((p) => ({ user_id: p.id, team: i + 1 })),
+    )
     await act(
       () =>
         supabase.rpc('save_teams', {
@@ -89,7 +95,7 @@ export default function EventPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-5xl space-y-4">
       {justCreated && (
         <div className="rounded-2xl bg-ok p-4 text-white shadow-md">
           <div className="font-semibold">🎉 האירוע פורסם!</div>
@@ -116,12 +122,14 @@ export default function EventPage() {
         </div>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr] lg:items-start">
+      <div className="space-y-4">
       <Card className="space-y-2 text-sm">
         <div>🗓️ {formatDate(e.starts_at)} · {e.duration_min} דק'</div>
         <div>📍 {[e.address, e.city].filter(Boolean).join(', ')}</div>
         {d.facility && <div>🏟️ {d.facility.name}</div>}
         <div>
-          👥 {joined.length}/{e.max_participants} משתתפים · רמה ממוצעת {d.event_level.toFixed(1)} <LevelDots level={d.event_level} />
+          👥 {taken}/{e.max_participants} משתתפים{guests > 0 && ` (כולל ${guests} של המארגן)`} · רמה ממוצעת {d.event_level.toFixed(1)} <LevelDots level={d.event_level} />
         </div>
         <div>💰 {Number(e.price_ils) > 0 ? `₪${Number(e.price_ils)} למשתתף` : 'ללא תשלום'}</div>
         <div>
@@ -140,7 +148,7 @@ export default function EventPage() {
         {e.description && <div className="rounded-xl bg-mint p-2 whitespace-pre-line">{e.description}</div>}
       </Card>
 
-      <MapView center={{ lat: e.lat, lng: e.lng }} markers={[{ pos: { lat: e.lat, lng: e.lng }, emoji: d.sport.emoji }]} height={170} />
+      <MapView center={{ lat: e.lat, lng: e.lng }} markers={[{ pos: { lat: e.lat, lng: e.lng }, emoji: d.sport.emoji }]} height={window.innerWidth >= 1024 ? 260 : 170} />
 
       <ErrorBox>{err}</ErrorBox>
 
@@ -183,6 +191,8 @@ export default function EventPage() {
         </div>
       )}
 
+      </div>
+      <div className="space-y-4">
       {/* Participants */}
       <Card>
         <div className="mb-2 flex items-center justify-between">
@@ -196,7 +206,14 @@ export default function EventPage() {
       {d.is_organizer && e.status !== 'cancelled' && (
         <Card className="space-y-3">
           <div className="font-semibold">כלי מארגן</div>
-          {d.sport.team_count >= 2 && joined.length >= 2 && (
+          {!past && (
+            <Link to={`/events/${e.id}/edit`} className="block">
+              <Button variant="secondary" className="w-full border-ink/20">
+                ✏️ עריכת האירוע
+              </Button>
+            </Link>
+          )}
+          {d.sport.team_count >= 2 && taken >= 2 && (
             <div className="space-y-2">
               <Button variant="dark" className="w-full" onClick={computeTeams}>
                 ⚖️ {hasTeams ? 'חלוקה מחדש לקבוצות מאוזנות' : 'חלוקה לקבוצות מאוזנות'}
@@ -224,6 +241,8 @@ export default function EventPage() {
       {past && iAmIn && joined.length > 1 && e.status !== 'cancelled' && (
         <RatingForm d={d} onDone={load} />
       )}
+      </div>
+      </div>
       <div className="pb-2 text-center">
         <Link to="/" className="text-sm text-white/85 underline">
           חזרה לדף הבית
@@ -295,6 +314,12 @@ function ParticipantList({
           )}
         </div>
       ))}
+      {d.event.guest_count > 0 && (
+        <div className="flex items-center gap-2 py-2 text-sm text-ink-soft">
+          <span className="rounded-md bg-mint px-1.5 py-0.5 text-[11px] font-semibold" dir="ltr">+{d.event.guest_count}</span>
+          חברים של המארגן (לא רשומים באפליקציה)
+        </div>
+      )}
     </div>
   )
 }

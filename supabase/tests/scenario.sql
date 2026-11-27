@@ -95,7 +95,9 @@ select 'non-member sees organizer phone: ' || coalesce(get_event_details((select
 
 -- move the event to the past, rate, check level estimate
 reset role;
+select null from set_config('app.internal', 'on', false);
 update events set starts_at = now() - interval '2 hours' where sport_id = 1;
+select null from set_config('app.internal', 'off', false);
 set role authenticated;
 select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', false);
 select 'ratings saved: ' || submit_ratings((select id from events where sport_id = 1),
@@ -163,3 +165,41 @@ values ('00000000-0000-0000-0000-000000000002', 1, 'בדיקת טריגר', 'ת�
 select 'organizer auto-joined after revoke: ' || count(*) from event_participants ep join events e on e.id = ep.event_id where e.title = 'בדיקת טריגר';
 select 'recs after hardening: ' || count(*) from recommend_events();
 reset role;
+
+-- guests + editing
+set role authenticated;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', false);
+insert into events (organizer_id, sport_id, title, city, lat, lng, starts_at, max_participants, guest_count)
+values ('00000000-0000-0000-0000-000000000003', 1, 'עם חברים', 'תל אביב', 32.08, 34.78, now() + interval '2 days', 6, 3);
+select 'guests: status after create (1+3 of 6): ' || status from events where title = 'עם חברים';
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', false);
+select 'u4 sees joined_count incl guests: ' || joined_count from recommend_events() where event_id = (select id from events where title = 'עם חברים');
+select 'u4 join: ' || join_event((select id from events where title = 'עם חברים'))::text;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000005', false);
+select 'u5 join (last spot): ' || join_event((select id from events where title = 'עם חברים'))::text;
+reset role;
+select 'status when 3 app + 3 guests of 6: ' || status from events where title = 'עם חברים';
+set role authenticated;
+-- u5 (not organizer) cannot edit
+update events set max_participants = 50 where title = 'עם חברים';
+select 'max after non-organizer edit: ' || max_participants from events where title = 'עם חברים';
+-- organizer edits: more spots -> open again, participants notified of time change
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', false);
+update events set max_participants = 8, starts_at = starts_at + interval '1 hour' where title = 'עם חברים';
+select 'after organizer edit to 8: status=' || status || ' filled_at null=' || (filled_at is null) from events where title = 'עם חברים';
+do $$ begin
+  update events set max_participants = 4 where title = 'עם חברים';
+  raise exception 'FAIL: shrink below taken allowed';
+exception when raise_exception then
+  if sqlerrm like 'FAIL%' then raise; end if;
+  raise notice 'ok: shrink blocked (%)', sqlerrm;
+end $$;
+do $$ begin
+  update events set starts_at = now() - interval '1 day' where title = 'עם חברים';
+  raise exception 'FAIL: moved to past';
+exception when raise_exception then
+  if sqlerrm like 'FAIL%' then raise; end if;
+  raise notice 'ok: past date blocked';
+end $$;
+reset role;
+select 'update notifications: ' || count(*) from notifications where kind = 'updated';

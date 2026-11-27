@@ -23,7 +23,7 @@ export default function Facilities() {
   }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-5xl space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="page-title">מתקני ספורט</h1>
         {canAdd && !adding && <Button onClick={() => setAdding(true)}>➕ מתקן</Button>}
@@ -39,7 +39,7 @@ export default function Facilities() {
       ) : items.length === 0 ? (
         <Empty icon="🏟️" title="עוד אין מתקנים רשומים" />
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-4 lg:grid-cols-2">
           {items.map((f) => (
             <Card key={f.id}>
               <div className="flex items-start justify-between gap-2">

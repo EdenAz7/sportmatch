@@ -36,7 +36,7 @@ export default function Notifications() {
 
   if (loading) return <PageLoader />
   return (
-    <div className="space-y-3">
+    <div className="mx-auto max-w-2xl space-y-3">
       <h1 className="page-title">התראות</h1>
       {items.length === 0 ? (
         <Empty icon="🔔" title="אין התראות עדיין" />

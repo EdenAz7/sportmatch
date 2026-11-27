@@ -77,6 +77,7 @@ export default function App() {
         [
           ['/', <Home />],
           ['/events/new', <CreateEvent />],
+          ['/events/:id/edit', <CreateEvent />],
           ['/my', <MyEvents />],
           ['/profile', <ProfilePage />],
           ['/notifications', <Notifications />],

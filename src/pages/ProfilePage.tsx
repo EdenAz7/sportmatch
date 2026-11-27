@@ -105,7 +105,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
   }
 
   return (
-    <form onSubmit={save} className="space-y-4">
+    <form onSubmit={save} className="mx-auto max-w-5xl space-y-4">
       <div>
         <h1 className="page-title">{onboarding ? 'נעים להכיר 👋' : 'הפרופיל שלי'}</h1>
         {onboarding && (
@@ -115,6 +115,8 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
         )}
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      <div className="space-y-4">
       <Card className="space-y-3">
         <Field label="שם מלא">
           <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
@@ -163,6 +165,8 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
           ))}
       </Card>
 
+      </div>
+      <div className="space-y-4">
       <Card className="space-y-3">
         <div className="font-semibold">איפה אתה גר / משחק בדרך כלל?</div>
         <MapPicker value={place} onChange={setPlace} emoji="🏠" height={200} />
@@ -198,6 +202,9 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
         <div className="text-xs text-ink-soft">בלי בחירה – נתייחס לכל השעות באופן שווה</div>
       </Card>
 
+      </div>
+      </div>
+
       <ErrorBox>{err}</ErrorBox>
       {saved && <div className="rounded-xl bg-brand-light px-3 py-2 text-sm text-brand-dark">נשמר ✓</div>}
       <div className="flex justify-center">
@@ -207,7 +214,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
       </div>
 
       {!onboarding && (
-        <Card className="space-y-2">
+        <Card className="mx-auto max-w-md space-y-2">
           <div className="text-sm text-ink-soft">מחובר כ-{session?.user.email}</div>
           {profile?.role === 'user' && (
             <Button type="button" variant="secondary" className="w-full" onClick={becomeOwner}>

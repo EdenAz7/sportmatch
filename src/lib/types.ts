@@ -47,6 +47,7 @@ export interface SportEvent {
   level: number
   price_ils: number
   bit_link: string | null
+  guest_count: number
   status: EventStatus
   team_imbalance: number | null
   team_imbalance_random: number | null

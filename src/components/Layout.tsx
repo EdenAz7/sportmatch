@@ -40,15 +40,34 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isStaff = profile?.role === 'admin' || profile?.role === 'auditor'
 
   return (
-    <div className="app-bg mx-auto flex min-h-screen max-w-lg flex-col">
-      <header className="sticky top-0 z-20 bg-[#e6e6e6]/90 backdrop-blur">
-        <div className="flex items-center justify-between px-4 py-2.5">
+    <div className="app-bg mx-auto flex min-h-screen max-w-lg flex-col lg:max-w-none">
+      <header className="sticky top-0 z-20 bg-[#e6e6e6]/90 backdrop-blur lg:shadow-sm">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-2.5 lg:px-8">
           <Link to="/" className="flex items-center gap-2.5">
             <Logo size={46} />
             <span className="font-display text-xl text-brand" dir="ltr">
               SportMatch
             </span>
           </Link>
+          {session && (
+            <nav className="hidden flex-1 items-center gap-1 lg:flex">
+              {tabs.map((t) => (
+                <NavLink
+                  key={t.to}
+                  to={t.to}
+                  end={'end' in t ? t.end : false}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
+                      isActive ? 'bg-brand font-semibold text-white shadow' : 'text-ink hover:bg-black/5'
+                    }`
+                  }
+                >
+                  <NavIcon name={t.icon} />
+                  {t.label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
           <div className="flex items-center gap-1 text-ink">
             {isStaff && (
               <Link to="/admin" className="rounded-full px-2.5 py-1 text-sm font-medium hover:bg-black/5">
@@ -72,10 +91,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 px-4 pt-3 pb-28">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-3 pb-28 lg:px-8 lg:pt-8 lg:pb-12">{children}</main>
 
       {session && (
-        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto max-w-lg bg-[#1d1d1d] shadow-[0_-4px_16px_rgba(0,0,0,0.25)]">
+        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto max-w-lg bg-[#1d1d1d] shadow-[0_-4px_16px_rgba(0,0,0,0.25)] lg:hidden">
           <div className="grid grid-cols-4">
             {tabs.map((t) => (
               <NavLink

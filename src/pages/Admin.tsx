@@ -113,7 +113,7 @@ export default function Admin() {
   const recConversion = stats && stats.impressions > 0 ? stats.impressions_joined / stats.impressions : null
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-6xl space-y-4">
       <div>
         <h1 className="page-title">לוח ניהול</h1>
         <p className="text-sm text-ink-soft">{isAdmin ? 'מנהל מערכת' : 'מבקר מערכת – צפייה בלבד'}</p>
@@ -122,7 +122,7 @@ export default function Admin() {
 
       {stats && (
         <>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 lg:gap-3">
             <Kpi label="משתמשים רשומים" value={stats.users_total} sub={`${stats.users_onboarded} השלימו פרופיל`} />
             <Kpi label="פעילים ב-7 ימים" value={stats.active_7d} sub={`${stats.active_30d} ב-30 ימים`} />
             <Kpi label="אירועים שנוצרו" value={stats.events_total} sub={`${stats.events_upcoming} קרובים · ${stats.events_cancelled} בוטלו`} />

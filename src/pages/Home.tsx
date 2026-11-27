@@ -92,7 +92,7 @@ export default function Home() {
     () =>
       all.map((e) => ({
         e,
-        joined: e.event_participants.filter((p) => p.status === 'joined').length,
+        joined: e.event_participants.filter((p) => p.status === 'joined').length + (e.guest_count ?? 0),
         imIn: e.event_participants.some((p) => p.status === 'joined' && p.user_id === profile?.id),
         km: origin ? haversineKm(origin.lat, origin.lng, e.lat, e.lng) : null,
       })),
@@ -110,6 +110,7 @@ export default function Home() {
         </p>
       </div>
 
+      <div className="lg:max-w-md">
       <Segmented
         value={tab}
         onChange={setTab}
@@ -118,6 +119,7 @@ export default function Home() {
           ['all', '📋 כל האירועים'],
         ] as const}
       />
+      </div>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <Chip active={sportFilter === null} onClick={() => setSportFilter(null)}>
@@ -145,7 +147,7 @@ export default function Home() {
             </div>
           </Empty>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recs
               .filter((r) => recEvents[r.event_id])
               .map((r) => (
@@ -160,7 +162,7 @@ export default function Home() {
                   source="recommendation"
                 />
               ))}
-            <p className="pt-1 text-center text-xs text-white/85">
+            <p className="pt-1 text-center text-xs text-white/85 sm:col-span-2 lg:col-span-3">
               הדירוג מחושב ע"י מנוע ההתאמה ·{' '}
               <Link to="/about" className="underline">
                 איך זה עובד?
@@ -173,7 +175,7 @@ export default function Home() {
           היה הראשון לפתוח משחק!
         </Empty>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {allSorted.map(({ e, joined, km, imIn }) => (
             <EventCard
               key={e.id}

@@ -24,7 +24,7 @@ export default function About() {
   }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-4xl space-y-4">
       <h1 className="page-title">איך עובד מנוע ההתאמה?</h1>
       <Card className="space-y-2">
         <p className="text-sm">לכל זוג של משתמש ואירוע המערכת מחשבת ציון התאמה משוקלל משישה מדדים, כל אחד בין 0 ל-1:</p>
@@ -35,7 +35,7 @@ export default function About() {
           אחוז ההתאמה שמוצג הוא ההסתברות המשוערת שתצטרף: <span dir="ltr">σ(b + Score)</span>.
         </p>
       </Card>
-      <div className="space-y-2">
+      <div className="grid gap-2 lg:grid-cols-2 lg:gap-3">
         {FEATURES.map((f) => (
           <Card key={f.key} className="flex gap-3">
             <div className="w-16 shrink-0 text-center">

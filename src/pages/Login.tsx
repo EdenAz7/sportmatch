@@ -77,14 +77,34 @@ export default function Login() {
 
   return (
     <div className="app-bg min-h-screen">
-      <div className="mx-auto max-w-sm px-7 pt-10 pb-10">
-        <div className="mb-5 flex justify-center">
-          <Logo size={150} />
+      <div className="mx-auto max-w-sm px-7 pt-10 pb-10 lg:grid lg:min-h-screen lg:max-w-5xl lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-12">
+        <div>
+          <div className="mb-5 flex justify-center">
+            <span className="lg:hidden">
+              <Logo size={150} />
+            </span>
+            <span className="hidden lg:inline">
+              <Logo size={230} />
+            </span>
+          </div>
+          <h1 className="mb-1 text-center font-display text-5xl text-brand lg:text-6xl">{mode === 'signup' ? 'הרשמה' : 'התחברות'}</h1>
+          <p className="mb-8 text-center text-sm text-ink-soft lg:text-base">מוצאים משחק ברמה שלך, קרוב אליך, תוך דקות</p>
+          <div className="hidden gap-3 lg:grid lg:grid-cols-3">
+            {[
+              ['🎯', 'התאמה חכמה', 'ענף, רמה, מרחק ושעות'],
+              ['⚖️', 'קבוצות מאוזנות', 'חלוקה אוטומטית לפי רמה'],
+              ['⭐', 'דירוג שחקנים', 'ספורטיביות והגעה'],
+            ].map(([icon, title, sub]) => (
+              <div key={title} className="rounded-2xl bg-white/90 p-3 text-center shadow-md">
+                <div className="text-2xl">{icon}</div>
+                <div className="font-display text-brand">{title}</div>
+                <div className="text-xs text-ink-soft">{sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <h1 className="mb-1 text-center font-display text-5xl text-brand">{mode === 'signup' ? 'הרשמה' : 'התחברות'}</h1>
-        <p className="mb-8 text-center text-sm text-ink-soft">מוצאים משחק ברמה שלך, קרוב אליך, תוך דקות</p>
 
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-4 lg:rounded-3xl lg:bg-black/15 lg:p-8 lg:backdrop-blur-sm">
           {mode === 'signup' && (
             <PillInput icon={icons.user}>
               <input className={pill} placeholder="שם מלא" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
