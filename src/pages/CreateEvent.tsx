@@ -33,7 +33,7 @@ export default function CreateEvent() {
   const [maxP, setMaxP] = useState(sports.find((s) => s.id === firstSport)?.default_players ?? 10)
   const [have, setHave] = useState(1) // players the organizer already has, including himself
   const [appJoined, setAppJoined] = useState(0) // registered participants other than the organizer (edit mode)
-  const [level, setLevel] = useState(mySports.find((s) => s.sport_id === firstSport)?.self_level ?? 3)
+  const [level, setLevel] = useState(Number(mySports.find((s) => s.sport_id === firstSport)?.self_level ?? 3.5))
   const [price, setPrice] = useState('')
   const [bit, setBit] = useState('')
   const [desc, setDesc] = useState('')
@@ -74,7 +74,7 @@ export default function CreateEvent() {
       setMaxP(e.max_participants)
       setHave(e.guest_count + 1)
       setAppJoined(Math.max(0, (count ?? 1) - 1))
-      setLevel(e.level)
+      setLevel(Number(e.level))
       setPrice(Number(e.price_ils) > 0 ? String(Number(e.price_ils)) : '')
       setBit(e.bit_link ?? '')
       setDesc(e.description ?? '')
@@ -103,7 +103,7 @@ export default function CreateEvent() {
       const s = sports.find((x) => x.id === id)
       if (s) setMaxP(s.default_players)
       const mine = mySports.find((x) => x.sport_id === id)
-      if (mine) setLevel(mine.self_level)
+      if (mine) setLevel(Number(mine.self_level))
     }
   }
 
@@ -256,7 +256,7 @@ export default function CreateEvent() {
               <select className={inputClass} value={level} onChange={(e) => setLevel(Number(e.target.value))}>
                 {LEVELS.map((l) => (
                   <option key={l.value} value={l.value}>
-                    {l.label}
+                    {l.label} · {l.hint}
                   </option>
                 ))}
               </select>

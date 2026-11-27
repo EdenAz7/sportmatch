@@ -23,7 +23,7 @@ export default function MyEvents() {
       .from('event_participants')
       .select('status, events(*, event_participants(status))')
       .eq('user_id', session.user.id)
-      .in('status', ['joined', 'attended', 'no_show'])
+      .in('status', ['joined', 'attended', 'no_show', 'waitlist'])
       .then(({ data }) => {
         setRows(((data as unknown as Row[]) ?? []).filter((r) => r.events))
         setLoading(false)
@@ -74,9 +74,9 @@ export default function MyEvents() {
               key={r.events.id}
               event={r.events}
               sport={sports.find((s) => s.id === r.events.sport_id)}
-              joinedCount={r.events.event_participants.filter((p) => p.status !== 'left').length + (r.events.guest_count ?? 0)}
-              imIn
-              badge={r.events.organizer_id === session?.user.id ? 'מארגן' : undefined}
+              joinedCount={r.events.event_participants.filter((p) => p.status === 'joined' || p.status === 'attended' || p.status === 'no_show').length + (r.events.guest_count ?? 0)}
+              imIn={r.status !== 'waitlist'}
+              badge={r.events.organizer_id === session?.user.id ? 'מארגן' : r.status === 'waitlist' ? 'רשימת המתנה' : undefined}
             />
           ))}
         </div>

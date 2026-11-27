@@ -13,6 +13,8 @@ const ICONS: Record<string, string> = {
   teams: '⚖️',
   reminder: '⏰',
   rate: '⭐',
+  promoted: '🎟️',
+  updated: '✏️',
 }
 
 export default function Notifications() {

@@ -1,14 +1,20 @@
+/** Levels are ranges on the same 1..5 scale as the star ratings; stored as the midpoint */
 export const LEVELS = [
-  { value: 1, label: 'מתחיל', hint: 'משחק לפעמים, לומד את הבסיס' },
-  { value: 2, label: 'חובב', hint: 'משחק מדי פעם בשביל הכיף' },
-  { value: 3, label: 'בינוני', hint: 'משחק באופן קבוע' },
-  { value: 4, label: 'טוב', hint: 'שחקן חזק, משחק הרבה' },
-  { value: 5, label: 'מקצועני', hint: 'רקע תחרותי / ליגה' },
+  { value: 1.5, label: '1-2', hint: 'מתחיל – משחק לפעמים, לומד את הבסיס' },
+  { value: 2.5, label: '2-3', hint: 'חובב – משחק מדי פעם בשביל הכיף' },
+  { value: 3.5, label: '3-4', hint: 'משחק באופן קבוע ומכיר את המשחק' },
+  { value: 4.5, label: '4-5', hint: 'שחקן חזק / רקע תחרותי' },
 ]
 
+/** 3.4 -> "3-4" */
 export function levelLabel(level: number): string {
-  const l = LEVELS[Math.min(4, Math.max(0, Math.round(level) - 1))]
-  return l.label
+  const band = Math.min(4, Math.max(1, Math.floor(Number(level))))
+  return `${band}-${band + 1}`
+}
+
+export function levelHint(level: number): string {
+  const band = Math.min(4, Math.max(1, Math.floor(Number(level))))
+  return LEVELS[band - 1].hint
 }
 
 export const SLOTS = [

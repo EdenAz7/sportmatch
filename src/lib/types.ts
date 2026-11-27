@@ -1,6 +1,6 @@
 export type Role = 'user' | 'facility_owner' | 'admin' | 'auditor'
 export type EventStatus = 'open' | 'full' | 'cancelled' | 'completed'
-export type ParticipantStatus = 'joined' | 'left' | 'attended' | 'no_show'
+export type ParticipantStatus = 'joined' | 'left' | 'attended' | 'no_show' | 'waitlist'
 
 export interface Sport {
   id: number
@@ -77,6 +77,7 @@ export interface Participant {
   team: number | null
   source: string
   joined_at: string
+  promoted: boolean
   level: number
   reputation: number
   phone: string | null
@@ -91,8 +92,14 @@ export interface EventDetails {
   is_organizer: boolean
   is_member: boolean
   my_status: ParticipantStatus | null
+  my_paid: boolean
+  my_promoted_at: string | null
+  my_refund: { amount: number; done: boolean; late: boolean } | null
+  my_waitlist_position: number | null
   my_ratings_done: number
   participants: Participant[]
+  waitlist: { user_id: string; full_name: string }[]
+  refunds: { user_id: string; full_name: string; amount: number; done: boolean; late: boolean; phone: string | null }[] | null
 }
 
 export interface Recommendation {

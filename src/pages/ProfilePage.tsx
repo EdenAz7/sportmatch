@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { errorText, supabase } from '../lib/supabase'
-import { LEVELS, SLOTS, isValidIsraeliPhone } from '../lib/format'
+import { LEVELS, SLOTS, isValidIsraeliPhone, levelHint, levelLabel } from '../lib/format'
 import type { Place } from '../lib/geo'
 import { track } from '../lib/analytics'
 import { MapPicker } from '../components/Maps'
@@ -40,7 +40,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
     setLevels((prev) => {
       const next = { ...prev }
       if (next[id]) delete next[id]
-      else next[id] = 3
+      else next[id] = 3.5
       return next
     })
   }
@@ -129,7 +129,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
       <Card className="space-y-3">
         <div>
           <div className="font-semibold">באילו ענפים אתה משחק?</div>
-          <div className="text-xs text-ink-soft">ובאיזו רמה. הרמה מתעדכנת אוטומטית לפי הדירוגים שתקבל משחקנים אחרים</div>
+          <div className="text-xs text-ink-soft">ובאיזו רמה, בסולם 1–5 (כמו כוכבי הדירוג). הרמה מתעדכנת לפי הכוכבים שתקבל משחקנים אחרים</div>
         </div>
         <div className="flex flex-wrap gap-2">
           {sports.map((s) => (
@@ -143,15 +143,15 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
           .map((s) => (
             <div key={s.id} className="rounded-xl bg-mint p-3">
               <div className="mb-2 text-sm font-medium">
-                {s.emoji} {s.name_he} · {LEVELS[levels[s.id] - 1].label}
+                {s.emoji} {s.name_he} · רמה {levelLabel(levels[s.id])}
               </div>
-              <div className="grid grid-cols-5 gap-1">
+              <div className="grid grid-cols-4 gap-1" dir="ltr">
                 {LEVELS.map((l) => (
                   <button
                     key={l.value}
                     type="button"
                     onClick={() => setLevels((p) => ({ ...p, [s.id]: l.value }))}
-                    className={`rounded-lg py-1.5 text-xs ${
+                    className={`rounded-lg py-1.5 text-sm font-semibold ${
                       levels[s.id] === l.value ? 'bg-brand text-white' : 'bg-white text-ink-soft'
                     }`}
                     title={l.hint}
@@ -160,7 +160,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
                   </button>
                 ))}
               </div>
-              <div className="mt-1 text-[11px] text-ink-soft">{LEVELS[levels[s.id] - 1].hint}</div>
+              <div className="mt-1 text-[11px] text-ink-soft">{levelHint(levels[s.id])}</div>
             </div>
           ))}
       </Card>

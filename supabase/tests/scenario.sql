@@ -203,3 +203,77 @@ exception when raise_exception then
 end $$;
 reset role;
 select 'update notifications: ' || count(*) from notifications where kind = 'updated';
+
+-- ---------------------------------------------------------------
+-- cancellation policy + waitlist
+-- ---------------------------------------------------------------
+set role authenticated;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+insert into events (organizer_id, sport_id, title, city, lat, lng, starts_at, max_participants, price_ils, level)
+values ('00000000-0000-0000-0000-000000000001', 1, 'מדיניות', 'תל אביב', 32.08, 34.78, now() + interval '2 days', 3, 40, 3.5);
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+select 'A join: ' || join_event((select id from events where title = 'מדיניות'))::text;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', false);
+select 'B join: ' || join_event((select id from events where title = 'מדיניות'))::text;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', false);
+do $$ begin perform join_event((select id from events where title = 'מדיניות')); raise exception 'FAIL'; 
+exception when raise_exception then if sqlerrm = 'FAIL' then raise; end if; raise notice 'ok: C cannot join full event'; end $$;
+select 'C waitlist: ' || join_waitlist((select id from events where title = 'מדיניות'))::text;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000005', false);
+select 'D waitlist: ' || join_waitlist((select id from events where title = 'מדיניות'))::text;
+-- organizer marks A paid
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+select set_paid((select id from events where title = 'מדיניות'), '00000000-0000-0000-0000-000000000002', true);
+-- A cancels 2 days before: free, full refund, C promoted
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+select 'A leaves (>24h): ' || leave_event((select id from events where title = 'מדיניות'))::text;
+reset role;
+select 'after A: ' || string_agg(left(user_id::text, 1) || right(user_id::text, 1) || '=' || status || coalesce(' refund=' || refund_due, '') || case when promoted_at is not null then ' promoted' else '' end, ', ' order by user_id)
+  from event_participants where event_id = (select id from events where title = 'מדיניות');
+select 'C notified: ' || message from notifications where kind = 'promoted' and user_id = '00000000-0000-0000-0000-000000000004';
+select null from set_config('app.internal', 'on', false);
+update events set starts_at = now() + interval '10 hours' where title = 'מדיניות';
+select null from set_config('app.internal', 'off', false);
+set role authenticated;
+-- B (did not pay) cancels 10h before: late, no refund, D promoted
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', false);
+select 'B leaves (10h): ' || leave_event((select id from events where title = 'מדיניות'))::text;
+reset role;
+select 'B late flag: ' || late_cancel || ', B reputation: ' || round(user_reputation('00000000-0000-0000-0000-000000000003')::numeric, 3) from event_participants where user_id = '00000000-0000-0000-0000-000000000003' and event_id = (select id from events where title = 'מדיניות');
+select null from set_config('app.internal', 'on', false);
+update events set starts_at = now() + interval '2 hours' where title = 'מדיניות';
+select null from set_config('app.internal', 'off', false);
+-- C was promoted two days earlier in real time
+update event_participants set promoted_at = now() - interval '2 days' where user_id = '00000000-0000-0000-0000-000000000004' and event_id = (select id from events where title = 'מדיניות');
+set role authenticated;
+-- C (promoted 2 days before) cannot cancel in the last 3h
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', false);
+do $$ begin perform leave_event((select id from events where title = 'מדיניות')); raise exception 'FAIL';
+exception when raise_exception then if sqlerrm = 'FAIL' then raise; end if; raise notice 'ok: locked in last 3h (%)', sqlerrm; end $$;
+-- D (promoted inside the last 24h) can still cancel without penalty
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000005', false);
+select 'D leaves (promoted recently, 2h): ' || leave_event((select id from events where title = 'מדיניות'))::text;
+-- organizer view: refunds + status
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+select 'refunds for organizer: ' || (get_event_details((select id from events where title = 'מדיניות')) -> 'refunds')::text;
+select set_refunded((select id from events where title = 'מדיניות'), '00000000-0000-0000-0000-000000000002', true);
+select 'refund marked done: ' || refund_done from event_participants where user_id = '00000000-0000-0000-0000-000000000002' and event_id = (select id from events where title = 'מדיניות');
+reset role;
+select 'event status after D left: ' || status from events where title = 'מדיניות';
+-- waitlist promotion when organizer adds spots
+set role authenticated;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+insert into events (organizer_id, sport_id, title, city, lat, lng, starts_at, max_participants, price_ils)
+values ('00000000-0000-0000-0000-000000000001', 1, 'הגדלה', 'תל אביב', 32.08, 34.78, now() + interval '3 days', 2, 0);
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000002', false);
+select 'join small: ' || join_event((select id from events where title = 'הגדלה'))::text;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003', false);
+select 'wait small: ' || join_waitlist((select id from events where title = 'הגדלה'))::text;
+select null from set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+update events set max_participants = 4 where title = 'הגדלה';
+reset role;
+select 'after adding spots: ' || string_agg(right(user_id::text, 1) || '=' || status, ', ' order by user_id) || ' | event ' || (select status from events where title = 'הגדלה')
+  from event_participants where event_id = (select id from events where title = 'הגדלה');
+-- level ranges
+select 'levels stored as midpoints: ' || string_agg(distinct self_level::text, ',') from user_sports;
+select 'event level default: ' || level from events where title = 'הגדלה';
