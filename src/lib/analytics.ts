@@ -44,11 +44,32 @@ export function track(name: string, props: Record<string, unknown> = {}) {
     .then(() => undefined)
 }
 
+/** Human-readable screen name, so GA reports show "דף אירוע" instead of "SportMatch" for every view */
+export function screenName(path: string): string {
+  if (path === '/' || path === '') return 'בית – המלצות'
+  if (/^\/events\/new/.test(path)) return 'יצירת אירוע'
+  if (/^\/events\/[^/]+\/edit/.test(path)) return 'עריכת אירוע'
+  if (/^\/events\/[^/]+/.test(path)) return 'דף אירוע'
+  const map: Record<string, string> = {
+    '/login': 'התחברות',
+    '/welcome': 'הרשמה – פרופיל',
+    '/my': 'האירועים שלי',
+    '/notifications': 'התראות',
+    '/profile': 'הפרופיל שלי',
+    '/facilities': 'מתקנים',
+    '/admin': 'לוח ניהול',
+    '/about': 'אודות',
+  }
+  return map[path] ?? path
+}
+
 /** The app uses hash routing, so report a clean virtual URL per screen, e.g. /sportmatch/events/123 */
 export function trackPage(path: string) {
+  const title = `${screenName(path)} · SportMatch`
+  document.title = title
   if (GA_ID && window.gtag) {
     const virtual = `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}${path}`
-    window.gtag('event', 'page_view', { page_location: virtual, page_path: path, page_title: document.title })
+    window.gtag('event', 'page_view', { page_location: virtual, page_path: path, page_title: title })
   }
   void supabase
     .from('app_events')
