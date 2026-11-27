@@ -1,8 +1,41 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { errorText, supabase } from '../lib/supabase'
 import { track } from '../lib/analytics'
-import { Button, ErrorBox, Field, inputClass } from '../components/ui'
+import { Button, ErrorBox, Logo } from '../components/ui'
+
+function PillInput({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex items-center rounded-full border-[2.5px] border-ink bg-white/95 shadow-sm">
+      <span className="flex w-14 shrink-0 justify-center text-ink">{icon}</span>
+      <span className="h-7 w-[2.5px] shrink-0 bg-ink" />
+      {children}
+    </div>
+  )
+}
+
+const pill = 'w-full bg-transparent px-4 py-3 outline-none placeholder:text-ink-soft/70'
+
+const icons = {
+  user: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  ),
+  mail: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3.5 6 8.5 7 8.5-7" />
+    </svg>
+  ),
+  lock: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  ),
+}
 
 export default function Login() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
@@ -43,75 +76,71 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-ink text-white">
-      <div className="mx-auto max-w-md px-6 pt-14 pb-10">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-4xl shadow-lg">⚽</div>
-          <h1 className="text-3xl font-bold" dir="ltr">
-            Sport<span className="text-brand">Match</span>
-          </h1>
-          <p className="mt-2 text-white/75">מוצאים משחק ברמה שלך, קרוב אליך, תוך דקות</p>
+    <div className="app-bg min-h-screen">
+      <div className="mx-auto max-w-sm px-7 pt-10 pb-10">
+        <div className="mb-5 flex justify-center">
+          <Logo size={150} />
         </div>
+        <h1 className="mb-1 text-center font-display text-5xl text-brand">{mode === 'signup' ? 'הרשמה' : 'התחברות'}</h1>
+        <p className="mb-8 text-center text-sm text-ink-soft">מוצאים משחק ברמה שלך, קרוב אליך, תוך דקות</p>
 
-        <div className="mb-5 grid grid-cols-3 gap-2 text-center text-xs text-white/80">
-          <div className="rounded-xl bg-white/5 p-3">
-            <div className="text-xl">🎯</div>התאמה חכמה
-          </div>
-          <div className="rounded-xl bg-white/5 p-3">
-            <div className="text-xl">⚖️</div>קבוצות מאוזנות
-          </div>
-          <div className="rounded-xl bg-white/5 p-3">
-            <div className="text-xl">⭐</div>דירוג שחקנים
-          </div>
-        </div>
-
-        <form onSubmit={submit} className="space-y-3 rounded-2xl bg-white p-5 text-ink shadow-xl">
-          <div className="mb-2 grid grid-cols-2 rounded-xl bg-mint p-1 text-sm">
-            {(['signup', 'signin'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={`rounded-lg py-2 font-medium ${mode === m ? 'bg-white shadow-sm' : 'text-ink-soft'}`}
-              >
-                {m === 'signup' ? 'הרשמה' : 'התחברות'}
-              </button>
-            ))}
-          </div>
+        <form onSubmit={submit} className="space-y-4">
           {mode === 'signup' && (
-            <Field label="שם מלא">
-              <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
-            </Field>
+            <PillInput icon={icons.user}>
+              <input className={pill} placeholder="שם מלא" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+            </PillInput>
           )}
-          <Field label="אימייל">
+          <PillInput icon={icons.mail}>
             <input
-              className={inputClass}
+              className={pill}
               type="email"
               dir="ltr"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
             />
-          </Field>
-          <Field label="סיסמה" hint={mode === 'signup' ? 'לפחות 6 תווים' : undefined}>
+          </PillInput>
+          <PillInput icon={icons.lock}>
             <input
-              className={inputClass}
+              className={pill}
               type="password"
               dir="ltr"
+              placeholder={mode === 'signup' ? 'Password (6+)' : 'Password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               minLength={6}
               required
             />
-          </Field>
+          </PillInput>
+
+          <p className="pt-2 text-center text-sm font-medium text-white">
+            {mode === 'signup' ? 'כבר יש לך חשבון? ' : 'אין לך חשבון? '}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'signup' ? 'signin' : 'signup')
+                setErr('')
+              }}
+              className="font-semibold text-[#c9a9ff] underline-offset-2 hover:underline"
+            >
+              {mode === 'signup' ? 'התחברות' : 'הרשמה'}
+            </button>
+          </p>
+
           <ErrorBox>{err}</ErrorBox>
-          <Button type="submit" className="w-full" loading={busy}>
-            {mode === 'signup' ? 'יאללה, נרשמים' : 'כניסה'}
-          </Button>
+
+          <div className="flex justify-center pt-2">
+            <Button type="submit" variant="hero" className="w-56 py-3.5 text-lg tracking-wide" loading={busy}>
+              {mode === 'signup' ? 'יאללה, נרשמים' : 'כניסה'}
+            </Button>
+          </div>
+          <p className="pt-3 text-center text-xs text-white/80">
+            {mode === 'signup' ? 'בהרשמה הראשונה נבקש טלפון ואזור כדי להתאים לך משחקים' : 'פרויקט סטודנטים · ניתוח ותכנון מערכות מידע'}
+          </p>
         </form>
-        <p className="mt-6 text-center text-xs text-white/50">פרויקט סטודנטים · ניתוח ותכנון מערכות מידע</p>
       </div>
     </div>
   )

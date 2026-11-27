@@ -1,16 +1,20 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* SportMatch design: light grey / orange stripe / deep red, slab-serif titles */
 @theme {
   --font-sans: "Rubik", "Segoe UI", system-ui, sans-serif;
-  --color-ink: #0f2b2e;
-  --color-ink-soft: #24474b;
-  --color-brand: #12a26a;
-  --color-brand-dark: #0b7d50;
-  --color-brand-light: #d9f2e6;
-  --color-mint: #f1f6f3;
-  --color-accent: #ff6b35;
-  --color-line: #dde7e2;
+  --font-display: "Suez One", "Rubik", serif;
+  --color-ink: #1d1d1d;
+  --color-ink-soft: #5c5c5c;
+  --color-brand: #a31f17;
+  --color-brand-dark: #7c160f;
+  --color-brand-light: #fbe5dd;
+  --color-mint: #efefef;
+  --color-accent: #e8692c;
+  --color-line: #e3e3e3;
+  --color-ok: #3aa64a;
+  --color-sky: #e6e6e6;
 }
 
 html,
@@ -20,9 +24,38 @@ body,
 }
 
 body {
-  background: var(--color-mint);
   color: var(--color-ink);
+  background: #7c160f;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Diagonal background from the design: grey top, orange stripe, red bottom.
+   Fixed layer (background-attachment: fixed is not supported on iOS). */
+.app-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    211deg,
+    #e6e6e6 0%,
+    #e6e6e6 46%,
+    #d6612b 46%,
+    #e0692d 53%,
+    #a31f17 53%,
+    #7c160f 100%
+  );
+}
+
+.page-title {
+  font-family: var(--font-display);
+  color: var(--color-brand);
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.font-display {
+  font-family: var(--font-display);
 }
 
 /* Leaflet maps are always LTR inside an RTL page */

@@ -59,7 +59,7 @@ function Kpi({ label, value, sub }: { label: string; value: string | number; sub
   return (
     <div className="rounded-2xl border border-line bg-white p-3">
       <div className="text-xs text-ink-soft">{label}</div>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className="font-display text-2xl text-brand">{value}</div>
       {sub && <div className="text-[11px] text-ink-soft">{sub}</div>}
     </div>
   )
@@ -115,7 +115,7 @@ export default function Admin() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">לוח ניהול</h1>
+        <h1 className="page-title">לוח ניהול</h1>
         <p className="text-sm text-ink-soft">{isAdmin ? 'מנהל מערכת' : 'מבקר מערכת – צפייה בלבד'}</p>
       </div>
       <ErrorBox>{err}</ErrorBox>

@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { trackPage } from '../lib/analytics'
+import { Logo, NavIcon } from './ui'
 
 function useUnreadCount() {
   const { session } = useAuth()
@@ -20,11 +21,11 @@ function useUnreadCount() {
 }
 
 const tabs = [
-  { to: '/', label: 'בית', icon: '🏠', end: true },
-  { to: '/events/new', label: 'יצירה', icon: '➕' },
-  { to: '/my', label: 'האירועים שלי', icon: '📅' },
-  { to: '/profile', label: 'פרופיל', icon: '👤' },
-]
+  { to: '/', label: 'בית', icon: 'home', end: true },
+  { to: '/events/new', label: 'יצירה', icon: 'create' },
+  { to: '/my', label: 'האירועים שלי', icon: 'events' },
+  { to: '/profile', label: 'פרופיל', icon: 'profile' },
+] as const
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { session, profile } = useAuth()
@@ -39,29 +40,29 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isStaff = profile?.role === 'admin' || profile?.role === 'auditor'
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-mint">
-      <header className="sticky top-0 z-20 bg-ink text-white shadow">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-lg">⚽</span>
-            <span className="text-lg font-bold tracking-tight" dir="ltr">
-              Sport<span className="text-brand">Match</span>
+    <div className="app-bg mx-auto flex min-h-screen max-w-lg flex-col">
+      <header className="sticky top-0 z-20 bg-[#e6e6e6]/90 backdrop-blur">
+        <div className="flex items-center justify-between px-4 py-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
+            <Logo size={46} />
+            <span className="font-display text-xl text-brand" dir="ltr">
+              SportMatch
             </span>
           </Link>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 text-ink">
             {isStaff && (
-              <Link to="/admin" className="rounded-lg px-2 py-1 text-sm text-white/80 hover:bg-white/10">
+              <Link to="/admin" className="rounded-full px-2.5 py-1 text-sm font-medium hover:bg-black/5">
                 📊 ניהול
               </Link>
             )}
-            <Link to="/facilities" className="rounded-lg px-2 py-1 text-sm text-white/80 hover:bg-white/10">
+            <Link to="/facilities" className="rounded-full px-2 py-1 text-lg hover:bg-black/5" aria-label="מתקנים">
               🏟️
             </Link>
             {session && (
-              <Link to="/notifications" className="relative rounded-lg px-2 py-1 text-lg hover:bg-white/10" aria-label="התראות">
+              <Link to="/notifications" className="relative rounded-full px-2 py-1 text-lg hover:bg-black/5" aria-label="התראות">
                 🔔
                 {unread > 0 && (
-                  <span className="absolute -top-0.5 -left-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold">
+                  <span className="absolute -top-0.5 -left-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
                     {unread > 9 ? '9+' : unread}
                   </span>
                 )}
@@ -71,21 +72,21 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 px-4 pt-4 pb-24">{children}</main>
+      <main className="flex-1 px-4 pt-3 pb-28">{children}</main>
 
       {session && (
-        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto max-w-lg border-t border-line bg-white">
+        <nav className="safe-bottom fixed inset-x-0 bottom-0 z-20 mx-auto max-w-lg bg-[#1d1d1d] shadow-[0_-4px_16px_rgba(0,0,0,0.25)]">
           <div className="grid grid-cols-4">
             {tabs.map((t) => (
               <NavLink
                 key={t.to}
                 to={t.to}
-                end={t.end}
+                end={'end' in t ? t.end : false}
                 className={({ isActive }) =>
-                  `flex flex-col items-center gap-0.5 py-2 text-[11px] ${isActive ? 'font-semibold text-brand' : 'text-ink-soft'}`
+                  `flex flex-col items-center gap-1 pt-2.5 pb-2 text-[11px] ${isActive ? 'font-semibold text-accent' : 'text-white/80'}`
                 }
               >
-                <span className="text-xl leading-none">{t.icon}</span>
+                <NavIcon name={t.icon} />
                 {t.label}
               </NavLink>
             ))}

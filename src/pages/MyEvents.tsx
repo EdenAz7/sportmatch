@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import type { SportEvent } from '../lib/types'
 import EventCard from '../components/EventCard'
-import { Button, Empty, PageLoader } from '../components/ui'
+import { Button, Empty, PageLoader, Segmented } from '../components/ui'
 
 interface Row {
   status: string
@@ -41,18 +41,15 @@ export default function MyEvents() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">האירועים שלי</h1>
-      <div className="grid grid-cols-2 rounded-xl bg-white p-1 text-sm shadow-sm">
-        {(['upcoming', 'past'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`rounded-lg py-2 font-medium ${tab === t ? 'bg-ink text-white' : 'text-ink-soft'}`}
-          >
-            {t === 'upcoming' ? 'קרובים' : 'עברו'}
-          </button>
-        ))}
-      </div>
+      <h1 className="page-title">האירועים שלי</h1>
+      <Segmented
+        value={tab}
+        onChange={setTab}
+        options={[
+          ['upcoming', 'קרובים'],
+          ['past', 'עברו'],
+        ] as const}
+      />
       {loading ? (
         <PageLoader />
       ) : list.length === 0 ? (
@@ -71,16 +68,14 @@ export default function MyEvents() {
       ) : (
         <div className="space-y-3">
           {list.map((r) => (
-            <div key={r.events.id} className="relative">
-              {r.events.organizer_id === session?.user.id && (
-                <span className="absolute top-2 left-2 z-10 rounded-full bg-ink px-2 py-0.5 text-[10px] text-white">מארגן</span>
-              )}
-              <EventCard
-                event={r.events}
-                sport={sports.find((s) => s.id === r.events.sport_id)}
-                joinedCount={r.events.event_participants.filter((p) => p.status !== 'left').length}
-              />
-            </div>
+            <EventCard
+              key={r.events.id}
+              event={r.events}
+              sport={sports.find((s) => s.id === r.events.sport_id)}
+              joinedCount={r.events.event_participants.filter((p) => p.status !== 'left').length}
+              imIn
+              badge={r.events.organizer_id === session?.user.id ? 'מארגן' : undefined}
+            />
           ))}
         </div>
       )}

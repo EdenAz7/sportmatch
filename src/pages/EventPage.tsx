@@ -91,14 +91,14 @@ export default function EventPage() {
   return (
     <div className="space-y-4">
       {justCreated && (
-        <div className="rounded-2xl bg-brand p-4 text-white">
+        <div className="rounded-2xl bg-ok p-4 text-white shadow-md">
           <div className="font-semibold">🎉 האירוע פורסם!</div>
           <div className="text-sm text-white/90">מנוע ההתאמה כבר ממליץ עליו לשחקנים מתאימים. כדאי גם לשתף בוואטסאפ:</div>
           <a
             href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 inline-block rounded-xl bg-white px-3 py-1.5 text-sm font-medium text-brand-dark"
+            className="mt-2 inline-block rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-ok"
           >
             שיתוף בוואטסאפ
           </a>
@@ -106,9 +106,9 @@ export default function EventPage() {
       )}
 
       <div className="flex items-start gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm">{d.sport.emoji}</div>
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-md">{d.sport.emoji}</div>
         <div className="min-w-0">
-          <h1 className="text-xl leading-tight font-bold">{e.title}</h1>
+          <h1 className="page-title text-[1.6rem]">{e.title}</h1>
           <div className="text-sm text-ink-soft">
             {d.sport.name_he} · רמה {levelLabel(e.level)}
             {e.status === 'cancelled' && <span className="mr-2 font-semibold text-red-600">· בוטל</span>}
@@ -148,11 +148,11 @@ export default function EventPage() {
       {e.status !== 'cancelled' && !past && (
         <div className="space-y-2">
           {!iAmIn ? (
-            <Button className="w-full py-3 text-lg" onClick={join} loading={busy} disabled={spots <= 0}>
+            <Button variant="hero" className="w-full py-3.5 text-lg" onClick={join} loading={busy} disabled={spots <= 0}>
               {spots <= 0 ? 'האירוע מלא' : session ? 'אני בפנים! 🙌' : 'התחברות והצטרפות'}
             </Button>
           ) : (
-            <div className="rounded-2xl bg-brand-light p-3 text-center font-medium text-brand-dark">
+            <div className="rounded-full bg-ok p-3 text-center font-semibold text-white shadow-md">
               {d.is_organizer ? 'אתה המארגן של האירוע' : 'אתה רשום לאירוע ✓'}
             </div>
           )}
@@ -176,7 +176,7 @@ export default function EventPage() {
             </a>
           </div>
           {iAmIn && !d.is_organizer && (
-            <Button variant="ghost" className="w-full text-sm" onClick={() => act(() => supabase.rpc('leave_event', { p_event: e.id }), 'leave_event')}>
+            <Button variant="onDark" className="w-full text-sm" onClick={() => act(() => supabase.rpc('leave_event', { p_event: e.id }), 'leave_event')}>
               ביטול השתתפות
             </Button>
           )}
@@ -225,7 +225,7 @@ export default function EventPage() {
         <RatingForm d={d} onDone={load} />
       )}
       <div className="pb-2 text-center">
-        <Link to="/" className="text-sm text-ink-soft underline">
+        <Link to="/" className="text-sm text-white/85 underline">
           חזרה לדף הבית
         </Link>
       </div>

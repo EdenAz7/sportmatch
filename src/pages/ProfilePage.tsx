@@ -107,7 +107,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
   return (
     <form onSubmit={save} className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">{onboarding ? 'נעים להכיר 👋' : 'הפרופיל שלי'}</h1>
+        <h1 className="page-title">{onboarding ? 'נעים להכיר 👋' : 'הפרופיל שלי'}</h1>
         {onboarding && (
           <p className="text-sm text-ink-soft">
             כמה פרטים קצרים, ומנוע ההתאמה ימצא לך משחקים ברמה שלך, קרוב אליך ובשעות שנוחות לך.
@@ -174,7 +174,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
             step={1}
             value={maxKm}
             onChange={(e) => setMaxKm(Number(e.target.value))}
-            className="w-full accent-[var(--color-brand)]"
+            className="w-full accent-[var(--color-accent)]"
           />
         </Field>
       </Card>
@@ -200,9 +200,11 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
 
       <ErrorBox>{err}</ErrorBox>
       {saved && <div className="rounded-xl bg-brand-light px-3 py-2 text-sm text-brand-dark">נשמר ✓</div>}
-      <Button type="submit" className="w-full" loading={busy}>
-        {onboarding ? 'סיום והתחלה' : 'שמירה'}
-      </Button>
+      <div className="flex justify-center">
+        <Button type="submit" variant="hero" className="w-64 py-3.5 text-lg" loading={busy}>
+          {onboarding ? 'סיום והתחלה' : 'שמירה'}
+        </Button>
+      </div>
 
       {!onboarding && (
         <Card className="space-y-2">

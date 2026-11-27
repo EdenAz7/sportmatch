@@ -105,7 +105,7 @@ export default function CreateEvent() {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <h1 className="text-2xl font-bold">אירוע חדש</h1>
+      <h1 className="page-title">אירוע חדש</h1>
 
       <Card className="space-y-3">
         <div className="font-semibold">ענף</div>
@@ -205,9 +205,12 @@ export default function CreateEvent() {
       </Card>
 
       <ErrorBox>{err}</ErrorBox>
-      <Button type="submit" className="w-full" loading={busy}>
-        פרסום האירוע
-      </Button>
+      <div className="flex justify-center pt-1">
+        <Button type="submit" variant="hero" className="w-64 py-3.5 text-lg" loading={busy}>
+          פרסום האירוע
+        </Button>
+      </div>
+      <p className="text-center text-xs text-white/80">המארגן נרשם אוטומטית כמשתתף הראשון</p>
     </form>
   )
 }

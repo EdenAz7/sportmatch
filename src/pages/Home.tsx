@@ -7,12 +7,12 @@ import { haversineKm } from '../lib/format'
 import type { Recommendation, SportEvent } from '../lib/types'
 import { reasons, type Weights } from '../engine/explain'
 import EventCard from '../components/EventCard'
-import { Button, Chip, Empty, ErrorBox, PageLoader } from '../components/ui'
+import { Button, Chip, Empty, ErrorBox, PageLoader, Segmented } from '../components/ui'
 
 type Tab = 'recommended' | 'all'
 
 interface BrowseRow extends SportEvent {
-  event_participants: { status: string }[]
+  event_participants: { status: string; user_id: string }[]
 }
 
 export default function Home() {
@@ -67,7 +67,7 @@ export default function Home() {
   const loadAll = useCallback(async () => {
     let q = supabase
       .from('events')
-      .select('*, event_participants(status)')
+      .select('*, event_participants(status, user_id)')
       .in('status', ['open', 'full'])
       .gt('starts_at', new Date().toISOString())
       .order('starts_at')
@@ -93,9 +93,10 @@ export default function Home() {
       all.map((e) => ({
         e,
         joined: e.event_participants.filter((p) => p.status === 'joined').length,
+        imIn: e.event_participants.some((p) => p.status === 'joined' && p.user_id === profile?.id),
         km: origin ? haversineKm(origin.lat, origin.lng, e.lat, e.lng) : null,
       })),
-    [all, origin],
+    [all, origin, profile?.id],
   )
 
   const firstName = profile?.full_name.split(' ')[0]
@@ -103,28 +104,20 @@ export default function Home() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">היי {firstName} 👋</h1>
+        <h1 className="page-title">היי {firstName} 👋</h1>
         <p className="text-sm text-ink-soft">
           {pos ? 'לפי המיקום הנוכחי שלך' : profile?.city ? `לפי האזור שלך: ${profile.city}` : 'אירועים קרובים'}
         </p>
       </div>
 
-      <div className="grid grid-cols-2 rounded-xl bg-white p-1 text-sm shadow-sm">
-        {(
-          [
-            ['recommended', '🎯 מומלצים עבורך'],
-            ['all', '📋 כל האירועים'],
-          ] as const
-        ).map(([t, label]) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`rounded-lg py-2 font-medium transition ${tab === t ? 'bg-ink text-white' : 'text-ink-soft'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        value={tab}
+        onChange={setTab}
+        options={[
+          ['recommended', '🎯 מומלצים עבורך'],
+          ['all', '📋 כל האירועים'],
+        ] as const}
+      />
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <Chip active={sportFilter === null} onClick={() => setSportFilter(null)}>
@@ -167,7 +160,7 @@ export default function Home() {
                   source="recommendation"
                 />
               ))}
-            <p className="pt-1 text-center text-xs text-ink-soft">
+            <p className="pt-1 text-center text-xs text-white/85">
               הדירוג מחושב ע"י מנוע ההתאמה ·{' '}
               <Link to="/about" className="underline">
                 איך זה עובד?
@@ -181,13 +174,14 @@ export default function Home() {
         </Empty>
       ) : (
         <div className="space-y-3">
-          {allSorted.map(({ e, joined, km }) => (
+          {allSorted.map(({ e, joined, km, imIn }) => (
             <EventCard
               key={e.id}
               event={e}
               sport={sports.find((s) => s.id === e.sport_id)}
               joinedCount={joined}
               distanceKm={km}
+              imIn={imIn}
               source="browse"
             />
           ))}

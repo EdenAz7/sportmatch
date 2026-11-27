@@ -25,10 +25,10 @@ export default function About() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">איך עובד מנוע ההתאמה?</h1>
+      <h1 className="page-title">איך עובד מנוע ההתאמה?</h1>
       <Card className="space-y-2">
         <p className="text-sm">לכל זוג של משתמש ואירוע המערכת מחשבת ציון התאמה משוקלל משישה מדדים, כל אחד בין 0 ל-1:</p>
-        <div className="rounded-xl bg-ink p-3 text-center font-mono text-sm text-brand" dir="ltr">
+        <div className="rounded-xl bg-ink p-3 text-center font-mono text-sm text-accent" dir="ltr">
           Score = w₁·Sport + w₂·Level + w₃·Distance + w₄·Time + w₅·Rating + w₆·History
         </div>
         <p className="text-sm">
@@ -42,7 +42,7 @@ export default function About() {
               <div className="text-xs text-ink-soft" dir="ltr">
                 {f.name}
               </div>
-              <div className="text-lg font-bold text-brand-dark">{w ? (w[f.key] as number).toFixed(2) : '…'}</div>
+              <div className="font-display text-lg text-brand">{w ? (w[f.key] as number).toFixed(2) : '…'}</div>
             </div>
             <div>
               <div className="font-semibold">{f.he}</div>

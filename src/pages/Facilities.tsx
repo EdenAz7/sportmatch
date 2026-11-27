@@ -25,7 +25,7 @@ export default function Facilities() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">מתקני ספורט</h1>
+        <h1 className="page-title">מתקני ספורט</h1>
         {canAdd && !adding && <Button onClick={() => setAdding(true)}>➕ מתקן</Button>}
       </div>
       {!canAdd && (
