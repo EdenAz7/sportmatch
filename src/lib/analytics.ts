@@ -5,7 +5,8 @@ import { supabase } from './supabase'
  *  1. Google Analytics 4 – enabled when VITE_GA_ID is set (e.g. G-XXXXXXX)
  *  2. Internal app_events table – always on, feeds the admin dashboard
  */
-const GA_ID = import.meta.env.VITE_GA_ID as string | undefined
+// Google Analytics 4 property "SportMatch" (web stream SportMatch Web)
+const GA_ID = (import.meta.env.VITE_GA_ID as string | undefined) ?? 'G-ZFHC0GV5K2'
 
 declare global {
   interface Window {
@@ -43,9 +44,11 @@ export function track(name: string, props: Record<string, unknown> = {}) {
     .then(() => undefined)
 }
 
+/** The app uses hash routing, so report a clean virtual URL per screen, e.g. /sportmatch/events/123 */
 export function trackPage(path: string) {
   if (GA_ID && window.gtag) {
-    window.gtag('event', 'page_view', { page_path: path, page_location: window.location.href })
+    const virtual = `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}${path}`
+    window.gtag('event', 'page_view', { page_location: virtual, page_path: path, page_title: document.title })
   }
   void supabase
     .from('app_events')
