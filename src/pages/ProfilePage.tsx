@@ -7,6 +7,7 @@ import type { Place } from '../lib/geo'
 import { track } from '../lib/analytics'
 import { MapPicker } from '../components/Maps'
 import { Button, Card, Chip, ErrorBox, Field, inputClass } from '../components/ui'
+import PushCard from '../components/PushCard'
 
 export default function ProfilePage({ onboarding = false }: { onboarding?: boolean }) {
   const { profile, mySports, sports, refresh, signOut, session } = useAuth()
@@ -101,7 +102,7 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
     const { error } = await supabase.rpc('become_facility_owner')
     if (error) return setErr(errorText(error))
     await refresh()
-    navigate('/facilities')
+    navigate('/my-facilities')
   }
 
   return (
@@ -214,12 +215,25 @@ export default function ProfilePage({ onboarding = false }: { onboarding?: boole
       </div>
 
       {!onboarding && (
+        <div className="mx-auto max-w-md">
+          <PushCard />
+        </div>
+      )}
+
+      {!onboarding && (
         <Card className="mx-auto max-w-md space-y-2">
           <div className="text-sm text-ink-soft">מחובר כ-{session?.user.email}</div>
           {profile?.role === 'user' && (
             <Button type="button" variant="secondary" className="w-full" onClick={becomeOwner}>
               🏟️ יש לי מתקן ספורט – הרשמה כבעל מתקן
             </Button>
+          )}
+          {(profile?.role === 'facility_owner' || profile?.role === 'admin') && (
+            <Link to="/my-facilities" className="block">
+              <Button type="button" variant="secondary" className="w-full">
+                🏟️ המתקנים שלי
+              </Button>
+            </Link>
           )}
           <Link to="/about" className="block py-1 text-center text-sm text-brand-dark underline">
             איך עובד מנוע ההתאמה?

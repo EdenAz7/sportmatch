@@ -11,6 +11,7 @@ import EventPage from './pages/EventPage'
 import MyEvents from './pages/MyEvents'
 import Notifications from './pages/Notifications'
 import Facilities from './pages/Facilities'
+import MyFacilities from './pages/MyFacilities'
 import Admin from './pages/Admin'
 import About from './pages/About'
 
@@ -78,6 +79,7 @@ export default function App() {
           ['/', <Home />],
           ['/events/new', <CreateEvent />],
           ['/events/:id/edit', <CreateEvent />],
+          ['/my-facilities', <MyFacilities />],
           ['/my', <MyEvents />],
           ['/profile', <ProfilePage />],
           ['/notifications', <Notifications />],

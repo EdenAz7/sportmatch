@@ -230,6 +230,80 @@ export default function Admin() {
           ))}
         </div>
       </Card>
+
+      <FacilitiesAdmin isAdmin={isAdmin} />
     </div>
+  )
+}
+
+interface FacilityStats {
+  facilities: number
+  verified: number
+  owners: number
+  slots_upcoming: number
+  slots_booked: number
+  slots_total: number
+  games_at_facilities: number
+  games_total: number
+  push_users: number
+  list: { id: string; name: string; city: string; verified: boolean; owner_name: string; games: number }[]
+}
+
+/** Businesses: facilities, free times, bookings, and verification (admin only) */
+function FacilitiesAdmin({ isAdmin }: { isAdmin: boolean }) {
+  const [fs, setFs] = useState<FacilityStats | null>(null)
+  const [err, setErr] = useState('')
+
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.rpc('admin_facility_stats')
+    if (error) return setErr(errorText(error))
+    setFs(data as FacilityStats)
+  }, [])
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  async function verify(id: string, v: boolean) {
+    const { error } = await supabase.rpc('set_facility_verified', { p_facility: id, p_verified: v })
+    if (error) return setErr(errorText(error))
+    await load()
+  }
+
+  if (!fs) return <ErrorBox>{err}</ErrorBox>
+  const share = fs.games_total > 0 ? fs.games_at_facilities / fs.games_total : null
+  const booked = fs.slots_total > 0 ? fs.slots_booked / fs.slots_total : null
+  return (
+    <Card className="space-y-3">
+      <div className="font-semibold">🏟️ מתקנים ועסקים</div>
+      <ErrorBox>{err}</ErrorBox>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+        <Kpi label="מתקנים רשומים" value={fs.facilities} sub={`${fs.verified} מאומתים · ${fs.owners} בעלי מתקנים`} />
+        <Kpi label="שעות פנויות קרובות" value={fs.slots_upcoming} />
+        <Kpi label="שעות שהוזמנו" value={fs.slots_booked} sub={`${pct(booked)} מכל השעות שפורסמו`} />
+        <Kpi label="משחקים במתקנים רשומים" value={fs.games_at_facilities} sub={`${pct(share)} מכל המשחקים`} />
+        <Kpi label="משתמשים עם התראות לטלפון" value={fs.push_users} />
+      </div>
+      {fs.list.length > 0 && (
+        <div className="divide-y divide-line rounded-xl border border-line">
+          {fs.list.map((f) => (
+            <div key={f.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+              <div>
+                <div className="font-medium">
+                  {f.name} {f.verified && <span className="text-ok">✓</span>}
+                </div>
+                <div className="text-xs text-ink-soft">
+                  {f.city} · {f.owner_name} · {f.games} משחקים
+                </div>
+              </div>
+              {isAdmin && (
+                <Button variant={f.verified ? 'ghost' : 'secondary'} onClick={() => verify(f.id, !f.verified)}>
+                  {f.verified ? 'ביטול אימות' : 'אימות'}
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   )
 }

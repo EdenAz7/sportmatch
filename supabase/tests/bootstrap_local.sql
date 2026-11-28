@@ -16,3 +16,12 @@ grant usage on schema public to anon, authenticated;
 alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on sequences to anon, authenticated;
 alter default privileges in schema public grant execute on functions to anon, authenticated;
+
+-- Stand-in for pg_net (records the HTTP calls instead of sending them)
+create schema if not exists net;
+create table net._calls (id bigserial primary key, url text, body jsonb, headers jsonb, created_at timestamptz default now());
+create function net.http_post(url text, body jsonb default '{}', params jsonb default '{}',
+                              headers jsonb default '{}', timeout_milliseconds int default 5000)
+returns bigint language sql as $$
+  insert into net._calls (url, body, headers) values (url, body, headers) returning id
+$$;

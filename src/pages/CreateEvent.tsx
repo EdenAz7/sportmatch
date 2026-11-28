@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { errorText, supabase } from '../lib/supabase'
-import { LEVELS, isoToLocalInput, localInputToIso } from '../lib/format'
+import { LEVELS, formatDate, isoToLocalInput, localInputToIso } from '../lib/format'
 import type { Place } from '../lib/geo'
-import type { Facility, SportEvent } from '../lib/types'
+import type { Facility, FacilitySlot, SportEvent } from '../lib/types'
 import { track } from '../lib/analytics'
 import { MapPicker } from '../components/Maps'
 import { Button, Card, Chip, ErrorBox, Field, PageLoader, inputClass } from '../components/ui'
@@ -22,6 +22,9 @@ export default function CreateEvent() {
   const isEdit = !!editId
   const { profile, mySports, sports } = useAuth()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const presetFacility = params.get('facility')
+  const presetSlot = params.get('slot')
 
   const firstSport = mySports[0]?.sport_id ?? 1
   const [loading, setLoading] = useState(isEdit)
@@ -40,6 +43,9 @@ export default function CreateEvent() {
   const [place, setPlace] = useState<Place | null>(null)
   const [facilities, setFacilities] = useState<Facility[]>([])
   const [facilityId, setFacilityId] = useState<string>('')
+  const [slots, setSlots] = useState<FacilitySlot[]>([])
+  const [slotId, setSlotId] = useState<string>('')
+  const [bookedSlot, setBookedSlot] = useState<FacilitySlot | null>(null) // edit mode: the slot this game already holds
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
@@ -80,6 +86,13 @@ export default function CreateEvent() {
       setDesc(e.description ?? '')
       setPlace({ lat: e.lat, lng: e.lng, city: e.city, label: e.address ?? '' })
       setFacilityId(e.facility_id ?? '')
+      if (e.facility_slot_id) {
+        const { data: s } = await supabase.from('facility_slots').select('*').eq('id', e.facility_slot_id).single()
+        if (s) {
+          setBookedSlot(s as FacilitySlot)
+          setSlotId(e.facility_slot_id)
+        }
+      }
       setLoading(false)
     })()
   }, [editId, profile?.id, navigate])
@@ -97,6 +110,48 @@ export default function CreateEvent() {
       .then(({ data }) => setFacilities((data as Facility[]) ?? []))
   }, [sportId])
 
+  // opened from a facility ("open a game here"): pick its sport, the facility and maybe a slot
+  useEffect(() => {
+    if (isEdit || !presetFacility) return
+    supabase
+      .from('facilities')
+      .select('*')
+      .eq('id', presetFacility)
+      .single()
+      .then(({ data }) => {
+        const f = data as Facility | null
+        if (!f) return
+        if (!f.sport_ids.includes(sportId) && f.sport_ids.length) chooseSport(f.sport_ids[0])
+        setFacilities((prev) => (prev.some((x) => x.id === f.id) ? prev : [f, ...prev]))
+        setFacilityId(f.id)
+        setPlace({ lat: f.lat, lng: f.lng, city: f.city, label: f.name })
+        if (presetSlot) setSlotId(presetSlot)
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetFacility, presetSlot, isEdit])
+
+  // free times of the chosen facility
+  useEffect(() => {
+    if (!facilityId) {
+      setSlots([])
+      return
+    }
+    supabase.rpc('open_slots', { p_facility: facilityId }).then(({ data }) => {
+      const list = ((data as FacilitySlot[]) ?? []).slice(0, 24)
+      setSlots(list)
+    })
+  }, [facilityId])
+
+  // when a slot is chosen, the time comes from it
+  const allSlots = bookedSlot && bookedSlot.facility_id === facilityId ? [bookedSlot, ...slots] : slots
+  const chosenSlot = allSlots.find((x) => x.id === slotId) ?? null
+  useEffect(() => {
+    if (chosenSlot) {
+      setStart(isoToLocalInput(chosenSlot.starts_at))
+      setDuration(chosenSlot.duration_min)
+    }
+  }, [chosenSlot?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function chooseSport(id: number) {
     setSportId(id)
     if (!isEdit) {
@@ -109,6 +164,7 @@ export default function CreateEvent() {
 
   function chooseFacility(id: string) {
     setFacilityId(id)
+    setSlotId('')
     const f = facilities.find((x) => x.id === id)
     if (f) setPlace({ lat: f.lat, lng: f.lng, city: f.city, label: f.name })
   }
@@ -130,6 +186,7 @@ export default function CreateEvent() {
     const payload = {
       sport_id: sportId,
       facility_id: facilityId || null,
+      facility_slot_id: slotId && chosenSlot ? slotId : null,
       title: title.trim(),
       description: desc.trim() || null,
       city: place.city,
@@ -208,11 +265,18 @@ export default function CreateEvent() {
           <Card className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <Field label="מתי">
-                <input type="datetime-local" className={inputClass} value={start} onChange={(e) => setStart(e.target.value)} required />
+                <input
+                  type="datetime-local"
+                  className={inputClass}
+                  value={start}
+                  onChange={(e) => setStart(e.target.value)}
+                  disabled={!!chosenSlot}
+                  required
+                />
               </Field>
               <Field label="משך (דקות)">
-                <select className={inputClass} value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-                  {[45, 60, 90, 120, 150, 180].map((m) => (
+                <select className={inputClass} value={duration} onChange={(e) => setDuration(Number(e.target.value))} disabled={!!chosenSlot}>
+                  {Array.from(new Set([45, 60, 90, 120, 150, 180, duration])).sort((a, b) => a - b).map((m) => (
                     <option key={m} value={m}>
                       {m}
                     </option>
@@ -220,6 +284,14 @@ export default function CreateEvent() {
                 </select>
               </Field>
             </div>
+            {chosenSlot && (
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-mint px-3 py-2 text-sm">
+                <span>🏟️ המועד נקבע לפי השעה שבחרת במתקן</span>
+                <button type="button" className="text-xs text-brand-dark underline" onClick={() => setSlotId('')}>
+                  ביטול הבחירה
+                </button>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <Field label="סה״כ משתתפים">
                 <input
@@ -291,16 +363,34 @@ export default function CreateEvent() {
                   {facilities.map((f) => (
                     <option key={f.id} value={f.id}>
                       {f.name} · {f.city}
+                      {f.verified ? ' ✓' : ''}
                     </option>
                   ))}
                 </select>
               </Field>
+            )}
+            {facilityId && allSlots.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-sm font-medium">שעות פנויות במתקן</div>
+                <div className="flex flex-wrap gap-2">
+                  {allSlots.map((sl) => (
+                    <Chip key={sl.id} active={slotId === sl.id} onClick={() => setSlotId(slotId === sl.id ? '' : sl.id)}>
+                      {formatDate(sl.starts_at)} · {sl.duration_min} ד׳
+                    </Chip>
+                  ))}
+                </div>
+                <p className="text-xs text-ink-soft">בחירת שעה שומרת אותה עבור המשחק שלך, ובעל המתקן מקבל התראה.</p>
+              </div>
+            )}
+            {facilityId && allSlots.length === 0 && (
+              <p className="text-xs text-ink-soft">למתקן הזה אין כרגע שעות פנויות שפורסמו. אפשר לבחור מועד חופשי ולתאם איתו.</p>
             )}
             <MapPicker
               value={place}
               onChange={(p) => {
                 setPlace(p)
                 setFacilityId('')
+                setSlotId('')
               }}
               emoji={sport?.emoji ?? '📍'}
               height={260}

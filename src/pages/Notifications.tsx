@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { timeAgo } from '../lib/format'
 import type { Notification } from '../lib/types'
 import { Empty, PageLoader } from '../components/ui'
+import PushCard from '../components/PushCard'
 
 const ICONS: Record<string, string> = {
   joined: '🙋',
@@ -15,6 +16,15 @@ const ICONS: Record<string, string> = {
   rate: '⭐',
   promoted: '🎟️',
   updated: '✏️',
+  facility_booked: '🏟️',
+  facility_cancelled: '🏟️',
+  facility_updated: '🏟️',
+  test: '📲',
+}
+
+function linkFor(n: Notification): string {
+  if (n.kind.startsWith('facility_')) return '/my-facilities'
+  return n.event_id ? `/events/${n.event_id}` : '/notifications'
 }
 
 export default function Notifications() {
@@ -40,6 +50,7 @@ export default function Notifications() {
   return (
     <div className="mx-auto max-w-2xl space-y-3">
       <h1 className="page-title">התראות</h1>
+      <PushCard compact={items.length > 0} />
       {items.length === 0 ? (
         <Empty icon="🔔" title="אין התראות עדיין" />
       ) : (
@@ -47,7 +58,7 @@ export default function Notifications() {
           {items.map((n) => (
             <Link
               key={n.id}
-              to={n.event_id ? `/events/${n.event_id}` : '#'}
+              to={linkFor(n)}
               className={`flex gap-3 px-4 py-3 ${n.read ? '' : 'bg-brand-light/40'}`}
             >
               <span className="text-xl">{ICONS[n.kind] ?? '🔔'}</span>

@@ -57,6 +57,7 @@ export function screenName(path: string): string {
     '/notifications': 'התראות',
     '/profile': 'הפרופיל שלי',
     '/facilities': 'מתקנים',
+    '/my-facilities': 'המתקנים שלי',
     '/admin': 'לוח ניהול',
     '/about': 'אודות',
   }

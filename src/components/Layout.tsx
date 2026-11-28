@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { trackPage } from '../lib/analytics'
+import { refreshPushSubscription } from '../lib/push'
 import { Logo, NavIcon } from './ui'
 
 function useUnreadCount() {
@@ -36,6 +37,11 @@ export default function Layout({ children }: { children: ReactNode }) {
     trackPage(location.pathname)
     window.scrollTo(0, 0)
   }, [location.pathname])
+
+  // keep this phone's push subscription linked to whoever is signed in
+  useEffect(() => {
+    if (profile?.id) refreshPushSubscription().catch(() => undefined)
+  }, [profile?.id])
 
   const isStaff = profile?.role === 'admin' || profile?.role === 'auditor'
 

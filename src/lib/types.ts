@@ -48,6 +48,7 @@ export interface SportEvent {
   price_ils: number
   bit_link: string | null
   guest_count: number
+  facility_slot_id: string | null
   status: EventStatus
   team_imbalance: number | null
   team_imbalance_random: number | null
@@ -67,6 +68,42 @@ export interface Facility {
   phone: string | null
   price_per_hour: number | null
   description: string | null
+  verified: boolean
+  created_at?: string
+  updated_at?: string | null
+}
+
+/** A free (or booked) time that a facility owner offers */
+export interface FacilitySlot {
+  id: string
+  facility_id: string
+  starts_at: string
+  duration_min: number
+  price_ils: number | null
+}
+
+export interface OwnerSlot extends FacilitySlot {
+  event: { id: string; title: string; status: EventStatus } | null
+}
+
+export interface OwnerEvent {
+  id: string
+  title: string
+  starts_at: string
+  status: EventStatus
+  sport_id: number
+  max_participants: number
+  taken: number
+  organizer_name: string
+  organizer_phone: string | null
+  from_slot: boolean
+}
+
+export interface OwnerFacility {
+  facility: Facility
+  slots: OwnerSlot[]
+  events: OwnerEvent[]
+  stats: { games_total: number; games_upcoming: number; players_total: number; slots_offered: number; slots_booked: number }
 }
 
 export interface Participant {
